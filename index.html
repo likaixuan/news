@@ -1,0 +1,368 @@
+﻿<!DOCTYPE HTML>
+<html ng-app="news">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Demo</title>
+		<link rel="stylesheet" type="text/css" href="./css/css.css" />
+		<script src="./js/angular.js"></script>
+		<script>
+			var app = angular.module('news', []);
+
+			app.controller('cont1', function($scope, $http) {
+				//当前类型
+				$scope.newsType = 'top';
+				//当前要获取表的记录数
+				$scope.tabelRow = 0;
+				$scope.i = 0;
+				//当前展示新闻的终点ID
+				$scope.end = 0;
+				//当前获取多少条新闻 两个需要数量一致
+				$scope.LENGTH = 10;
+				$scope.length = 10;
+				//要展现的新闻 分页显示的
+				$scope.newsContent = [];
+				//获取到的所有新闻
+				$scope.result = [];
+				//操作数据库对象
+				$scope.myDB = {
+					name: 'news',
+					version: 1,
+					db: null
+				};
+				//存放导航
+				$scope.typeContent = [{
+					title: '头条',
+					type: 'top',
+					max: 0
+				}, {
+					title: '社会',
+					type: 'shehui',
+					max: 0
+
+				}, {
+					title: '国内',
+					type: 'guonei',
+					max: 0
+				}, {
+					title: '国际',
+					type: 'guoji',
+					max: 0
+				}, {
+					title: '娱乐',
+					type: 'yule',
+					max: 0
+				}, {
+					title: '体育',
+					type: 'tiyu',
+					max: 0
+				}, {
+					title: '军事',
+					type: 'junshi',
+					max: 0
+				}, {
+					title: '科技',
+					type: 'keji',
+					max: 0
+				}, {
+					title: '财经',
+					type: 'caijing',
+					max: 0
+				}, {
+					title: '时尚',
+					type: 'shishang',
+					max: 0
+				}];
+				//监听记录数
+				
+				$scope.$watch('tabelRow', function() {
+
+					if($scope.tabelRow != 0) {
+						//行数改变时获取数据
+						$scope.newsContent = [];
+						$scope.getData();
+
+					}
+				});
+				//获取新闻
+				$scope.getNews = function(type) {
+					//指示图是否显示 
+					$scope.jzgd = false;
+					$scope.tabelRow = 0;
+					$scope.newsType = type;
+					$scope.bool = true;
+					$scope.jzgd = false;
+					$http.get('./callback.php', {
+						params: {
+							key: '6da45ce58b181934a1042736c0874923',
+							type: type
+						}
+					}).success(function(data) {
+						$scope.result = data.result.data;
+						//						$scope.newsContent=data.result.data;
+
+						//是否显示指示图
+						$scope.bool = false;
+						//拿到数据之后 开始打开数据库写入
+						$scope.openDB($scope.myDB.name, $scope.myDB.version);
+
+					}).error(function() {
+						alert('获取接口数据失败');
+					});
+				}
+				$scope.getNews("top");
+				//
+				$scope.isActive = function(i) {
+						$scope.i = i;
+				}
+				//打开或创建数据库
+				$scope.openDB = function(name, version) {
+						if("indexedDB" in window) {
+							// 支持
+							var version = version || 1;
+							var request = window.indexedDB.open(name, version);
+							//打开失败
+							request.onerror = function(e) {
+								console.log(e.currentTarget.error.message);
+							};
+							//打开成功
+							request.onsuccess = function(e) {
+								//把数据库实例 交给myDB对象的db属性
+								$scope.myDB.db = e.target.result;
+								//存储当前数据 拿一下当前数据库里的记录数  改变end的值
+								$scope.addData();
+
+							};
+							//第一次打开数据库|数据库版本变化
+							request.onupgradeneeded = function(e) {
+								var db = e.target.result;
+								for(var i = 0; i < $scope.typeContent.length; i++) {
+									//判断当前要创建的表是否存在
+									if(!db.objectStoreNames.contains($scope.typeContent[i].type)) {
+										var store = db.createObjectStore($scope.typeContent[i].type, {
+											keyPath: "id",
+											autoIncrement: true
+										});
+										store.createIndex("urlIndex", "url", {
+											unique: true
+										});
+										store.createIndex("idIndex", "id", {
+											unique: true
+										});
+									}
+								}
+							};
+						} else {
+							// 不支持
+							console.log("您的浏览器不支持本地存储")
+						}
+
+					}
+					//获取当前表记录数
+
+				//添加数据到数据库中
+				$scope.addData = function(call) {
+					call = call || function() {};
+					var transaction = $scope.myDB.db.transaction($scope.newsType, 'readwrite');
+					var store = transaction.objectStore($scope.newsType);
+					var d=0;
+					for(var i = $scope.result.length - 1; i >= 0; i--) {
+							var fun = store.add($scope.result[i]);
+							fun.onerror=function(){
+								if(++d===$scope.result.length){
+									$scope.getRow();
+								}
+							}
+							fun.onsuccess=function(){
+								if(++d===$scope.result.length){
+									$scope.getRow();
+								}
+							}						
+					}						
+				}
+				$scope.getRow=function(){
+						var transaction = $scope.myDB.db.transaction($scope.newsType, 'readwrite');
+						var store = transaction.objectStore($scope.newsType);
+						var count = store.count();
+						//查询当前的记录数
+						count.onsuccess = function() {
+							//拿到记录数之后  赋值给要取的下标
+							$scope.$apply(function() {
+								$scope.end = $scope.tabelRow = count.result;
+								$scope.length = $scope.LENGTH;
+							})
+						}
+					}
+					//获取数据 
+				$scope.getData = function(call) {
+						//此回调函数主要是为了 清空newsContent数组 实现ui刷新
+						call = call || function() {};
+						call();
+						var transaction = $scope.myDB.db.transaction($scope.newsType, "readonly");
+						var store = transaction.objectStore($scope.newsType);
+						var index = store.index("idIndex");
+						var range = IDBKeyRange.bound($scope.end - $scope.length, $scope.end);
+						var test = index.openCursor(range).onsuccess = function(e) {
+							var cursor = e.target.result;
+							//遍历当前区间数据						
+							if(cursor) {
+								if(cursor.value) {
+									$scope.newsContent.push(cursor.value);
+								}
+
+								cursor.continue();
+								//else是遍历完成之后执行 相当于回调函数
+							} else {
+								//indexeddb异步会阻碍angular刷新 ui 需要用apply强刷一下
+								$scope.$apply(function() {
+									$scope.newsContent
+								})
+
+							}
+
+						}
+					}
+					//滚动条方法
+				function getScrollTop() {　　
+					var scrollTop = 0,
+						bodyScrollTop = 0,
+						documentScrollTop = 0;　　
+					if(document.body) {　　　　
+						bodyScrollTop = document.body.scrollTop;　　
+					}　　
+					if(document.documentElement) {　　　　
+						documentScrollTop = document.documentElement.scrollTop;　　
+					}　　
+					scrollTop = (bodyScrollTop - documentScrollTop > 0) ? bodyScrollTop : documentScrollTop;　　
+					return scrollTop;
+				}
+
+				//文档的总高度
+
+				function getScrollHeight() {　　
+					var scrollHeight = 0,
+						bodyScrollHeight = 0,
+						documentScrollHeight = 0;　　
+					if(document.body) {　　　　
+						bodyScrollHeight = document.body.scrollHeight;　　
+					}　　
+					if(document.documentElement) {　　　　
+						documentScrollHeight = document.documentElement.scrollHeight;　　
+					}　　
+					scrollHeight = (bodyScrollHeight - documentScrollHeight > 0) ? bodyScrollHeight : documentScrollHeight;　　
+					return scrollHeight;
+				}
+
+				//浏览器视口的高度
+
+				function getWindowHeight() {　　
+					var windowHeight = 0;　　
+					if(document.compatMode == "CSS1Compat") {　　　　
+						windowHeight = document.documentElement.clientHeight;　　
+					} else {　　　　
+						windowHeight = document.body.clientHeight;　　
+					}　　
+					return windowHeight;
+				}
+				//滚动条事件
+				window.onscroll = function() {　　
+					if(getScrollTop() + getWindowHeight() == getScrollHeight()) {　　　　
+						//是否显示指示图
+						$scope.$apply(function() {
+							//判断当前数据库里的内容是不是满足 从end-length开始取 而且length
+							if($scope.end - $scope.length - $scope.length > 0) {
+								$scope.end = $scope.end - $scope.length;
+								$scope.getData(function() {
+									$scope.newsContent = [];
+								});
+							} else if($scope.end - $scope.length === 0) {
+								$scope.jzgd = true;
+							} else if($scope.end - $scope.length > 0) {
+								$scope.jzgd = true;
+								$scope.end = $scope.end - $scope.length;
+								$scope.length = $scope.tabelRow % $scope.length;
+								$scope.getData(function() {
+									$scope.newsContent = [];
+								});
+
+							}
+						})
+
+					}
+				};
+
+			});
+		</script>
+	</head>
+
+	<body ng-controller="cont1">
+		<!-- 头部 -->
+		<div class="h-head">
+			<img src="./img/logo.png" />
+		</div>
+		<!-- 导航栏 -->
+		<div id="nav">
+			<div id="scoll">
+				<ul>
+					<li class="{{i==$index?'active':''}}" ng-id="{{" list "+$index}}" ng-repeat="item in typeContent" ng-click="getNews(item.type);isActive($index)">{{item.title}}</li>
+				</ul>
+			</div>
+		</div>
+		<!-- 内容 -->
+		<div id="content">
+			<a href="{{item.url}}" class="item clear-float" ng-repeat="item in newsContent">
+				<img src="{{item.thumbnail_pic_s}}" class="" width="107" height="78">
+				<div class="info">
+					<h3>{{item.title}}</h3>
+					<p><span class="author">{{item.author_name}}<span><span class="time">{{item.date}}</span></p>
+				</div>
+
+			</a>
+			<div ng-click="getNews(newsType)" ng-show="jzgd">加载更多</div>
+		</div>
+		<!--加载中-->
+		<div class="spinner" ng-show="bool">
+			<div class="rect1"></div>
+			<div class="rect2"></div>
+			<div class="rect3"></div>
+			<div class="rect4"></div>
+			<div class="rect5"></div>
+		</div>
+	</body>
+	<script>
+		drag("scoll");
+
+		function drag(obj) {
+			var obj = document.getElementById(obj);
+			if(arguments.length == 1) {
+				var parentNode = window.self;
+				var pWidth = parentNode.innerWidth,
+					pHeight = parentNode.innerHeight;
+			}
+			//手指放到屏幕上时
+			obj.addEventListener('touchstart', function(event) {
+				//拿到手指
+				var touch = event.targetTouches[0];
+				//拿到手指触点在当前对象的位置
+				var disX = touch.clientX - obj.offsetLeft;
+				var oWidth = obj.offsetWidth;
+				//手指在屏幕上方移动时
+				obj.addEventListener('touchmove', function(event) {
+					var touch = event.targetTouches[0];
+					//改变当前拖动对象的位置
+					obj.style.left = touch.clientX - disX + 'px';
+					//左侧
+					if(obj.offsetLeft >= 0) {
+						obj.style.left = "0px";
+					};
+					//右侧
+					if(obj.offsetLeft + obj.offsetWidth <= screen.width) {
+						obj.style.left = screen.width - obj.offsetWidth + 'px';
+					}
+				});
+			});
+		}
+	</script>
+
+</html>

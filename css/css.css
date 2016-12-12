@@ -1,0 +1,181 @@
+/*初始化样式*/
+*{
+	margin: 0;
+	padding: 0;
+}
+html{
+	font-size:80%;
+}
+a:link, a:visited {
+	text-decoration: none;
+}
+/*工具样式*/
+.clear-float:after {content: " ";display:block;clear:both;}
+
+/*页面样式*/
+/*头部样式开始*/
+.h-head{
+	width: 100%;
+	height: 46px;
+	line-height:46px;
+	font-size:40px;
+	text-align:center;
+	position: fixed;
+	z-index: 1;
+	top:0;
+	background-color: #ed4040;
+}
+.h-head img{
+	height: 30px;
+	width: 120px;
+}
+/*头部样式结束*/
+/*导航栏的开始*/
+#nav{
+	height: 44px;
+	width: 100%;
+	background-color: #ccc;
+	position: fixed;
+	left: 0;
+	top: 46px;
+	z-index: 1;
+	overflow: hidden;
+}
+#nav #scoll{
+	position: absolute;
+	left:0px;
+	right:0px;
+	margin:0px auto;
+	width: 1000px;
+}
+#nav ul{
+	list-style: none;
+	height: 44px;
+	text-align: center;
+}
+#nav ul li{
+	height: 44px;
+	display:inline-block;
+	font-size: 1.4rem;
+	line-height: 44px;
+	padding-left: 32px;
+	padding-right: 32px;
+	cursor:pointer;
+}
+#nav ul li.active{
+	background:gold;
+}
+/*导航栏的结束*/
+/*新闻设置开始*/
+#content{
+	background-color: #fff;
+	margin-top:90px;
+	padding-left: 15px;
+}
+#content > div{
+	height:50px;
+	width:90%;
+	margin:5px auto;
+	border-radius:8px;
+	background:greenyellow;
+	text-align: center;
+	line-height:50px;
+}
+.item:first-child{
+	border-top:0;
+}
+.item{
+	display: block;
+	position: relative;
+	padding: 15px 15px 15px 0px;
+	border-top: 1px solid #f4f4f4;
+}
+.item .info{
+	line-height: 25px;
+	margin-right:110px;
+}
+.item img{
+	float:right;
+}
+.item .info h3{
+	overflow:hidden; 
+	text-overflow:ellipsis;
+	word-break: break-all;
+	-webkit-box;
+	-webkit-line-clamp:3;
+	-webkit-box-orient: vertical;
+
+}
+.item .info h3{
+	font-size: 1.5rem;
+	font-weight: bold;
+	color: #333;
+	max-height: 50px;
+}
+.item .info p{
+	font-size: 1rem;
+	color: #999;
+}
+.item .info p span{
+	margin-left:10px;
+}
+
+
+/*指示图*/
+.spinner {
+  margin: auto;
+  width: 70px;
+  height: 60px;
+  position: fixed;
+  top:0px;
+  bottom:0px;
+  left:0px;
+  right:0px;
+  text-align: center;
+  font-size: 10px;
+}
+ 
+.spinner > div {
+  background-color: #67CF22;
+  height: 100%;
+  width: 6px;
+  display: inline-block;
+   
+  -webkit-animation: stretchdelay 1.2s infinite ease-in-out;
+  animation: stretchdelay 1.2s infinite ease-in-out;
+}
+ 
+.spinner .rect2 {
+  -webkit-animation-delay: -1.1s;
+  animation-delay: -1.1s;
+}
+ 
+.spinner .rect3 {
+  -webkit-animation-delay: -1.0s;
+  animation-delay: -1.0s;
+}
+ 
+.spinner .rect4 {
+  -webkit-animation-delay: -0.9s;
+  animation-delay: -0.9s;
+}
+ 
+.spinner .rect5 {
+  -webkit-animation-delay: -0.8s;
+  animation-delay: -0.8s;
+}
+ 
+@-webkit-keyframes stretchdelay {
+  0%, 40%, 100% { -webkit-transform: scaleY(0.4) } 
+  20% { -webkit-transform: scaleY(1.0) }
+}
+ 
+@keyframes stretchdelay {
+  0%, 40%, 100% {
+    transform: scaleY(0.4);
+    -webkit-transform: scaleY(0.4);
+  }  20% {
+    transform: scaleY(1.0);
+    -webkit-transform: scaleY(1.0);
+  }
+}
